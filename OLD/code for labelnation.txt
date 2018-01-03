@@ -1,0 +1,3 @@
+cd C:\Users\alex.messina\Documents\GitHub\CoC-labels\
+
+prompt$ labelnation.py --csv -t avery#### -i fname_in.txt -o fname_out.ps
