@@ -89,14 +89,14 @@ if __name__=='__main__':
         ### Iterate over sheets in workbook (one workbook per project)
         for sheet in CoC.sheet_names:
             ## Extract project information and other data
-            project_info = CoC.parse(sheetname=sheet,header=8,parse_cols='A:F')
+            project_info = CoC.parse(sheetname=sheet,header=8,parse_cols='A:J')
             ## Project Name, Number, Sample Matrix
             project_name = project_info.ix[0]['Project Name:']
             project_number = project_info.ix[0]['Project Number:']
             sample_matrix = project_info.ix[0]['Sample Matrix:']
             
             ## Extract Label Data like Sample ID, etc.
-            form = CoC.parse(sheetname=sheet,header=10,index_col=0,parse_cols='A:H',skip_footer=11)
+            form = CoC.parse(sheetname=sheet,header=10,index_col=2,parse_cols='A:J',skip_footer=11)
             ## Drop blank lines from the form
             form = form[notnull(form.index)]
             
@@ -108,6 +108,7 @@ if __name__=='__main__':
             ### CREATE LABEL EXPORT
             ## Iterate over the rows in the CoC to generate labels
             for row in form.iterrows():
+                print row
                 ## Indexed by the "SampleID"
                 sampleID = row[0]
                 print sampleID

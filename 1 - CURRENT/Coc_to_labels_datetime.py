@@ -1,5 +1,3 @@
-
-
 """
 Created on Fri Sep 09 14:35:31 2016
 
@@ -45,8 +43,13 @@ if __name__=='__main__':
         
         ## How many extra, blank labels (Project Name only) do you want?
         #extra_labels=4
-        extra_labels= int(raw_input('How many extra labels would you like? \n These extras will only have the project name printed \n There are 10 labels per sheet, so 9 extras will fill out any sheet, and then you can delete the remainder in the Word doc \n \n' ))
+        print_extra_labels= str(raw_input('Want to fill your last sheet with extra labels? \n These extras will only have the project name printed \n Y or n? \n \n' ))
         print
+        
+        if print_extra_labels == 'N' or print_extra_labels == 'n' or print_extra_labels == 'No' or print_extra_labels == 'no':
+            extra_labels = 0
+        
+        
         ###############################################
         
         
@@ -85,7 +88,6 @@ if __name__=='__main__':
         
         ## Info for All Chain sheets in workbook (don't iteratively write over!)
         label_export_sheet = DataFrame(columns=['ProjectName','ProjectNumber','SampleID','Container','Preservative','BottleNumber','NumberOfBottles','AnalysisSuite','SampleType','Matrix','Sample Date','Sample Time'])
-        
         ### Iterate over sheets in workbook (one workbook per project)
         for sheet in CoC.sheet_names:
             ## Extract project information and other data
@@ -96,8 +98,9 @@ if __name__=='__main__':
             sample_matrix = project_info.ix[0]['Sample Matrix:']
             
             ## Extract Label Data like Sample ID, etc.
-            form = CoC.parse(sheetname=sheet,header=10,index_col=0,parse_cols='A:H',skip_footer=11)
+            form = CoC.parse(sheetname=sheet,header=10,index_col=0,parse_cols='A:H')#,skip_footer=11)
             ## Drop blank lines from the form
+            form = form.drop(form.ix['Special Instructions/Comments:':].index)
             form = form[notnull(form.index)]
             
             print 
@@ -107,12 +110,20 @@ if __name__=='__main__':
             
             ### CREATE LABEL EXPORT
             ## Iterate over the rows in the CoC to generate labels
+            
             for row in form.iterrows():
                 ## Indexed by the "SampleID"
                 sampleID = row[0]
                 print sampleID
                 ## Label data is in the rest of the row
                 info = row[1]
+                if len(info['Analysis']) >= 140:
+                    print len(info['Analysis']) 
+                    info['Analysis'] = 'See attached'
+                else:
+                    pass
+                
+             
                 try:
                     sample_date = row[1]['Sample Date'].date().strftime('%m/%d/%Y')
                 except:
@@ -175,11 +186,11 @@ if __name__=='__main__':
         label_export_sheet =label_export_sheet[['ProjectName','ProjectNumber','SampleID','Container','Preservative','BottleNumber','NumberOfBottles','AnalysisSuite','SampleType','Matrix','Sample Date','Sample Time']]
         
         #########################################
-        #### Mail Merge HERE
+        #### Mail Merge HERE            
         document = MailMerge(template_dir+template_file) ## Opens template file downloaded from GitHub above
     
         ## Check which merge fields are present, this is where the label data goes into
-        print document.get_merge_fields()
+        #print document.get_merge_fields()
         get_fields = document.get_merge_fields()
     
         ## Fields that are required for the label:
@@ -194,18 +205,27 @@ if __name__=='__main__':
             
             
         ## Print some extra labels with just the project name
-        ## Number is set up at the top of this code
-        for row in range(extra_labels):    
-            row_list.append({'NumberOfBottles':'__','Container':'','ProjectName':project_name,'AnalysisSuite':'','SampleID':'','BottleNumber':'__','Preservative':''})
+        ## Number is determined by how many to fill a sheet of 10 labels
+        if print_extra_labels == 'Y' or print_extra_labels == 'y' or print_extra_labels == 'Yes' or print_extra_labels == 'yes':
+            numlabels = len(merge_fields)
+            extra_labels = 10 - numlabels%10
+            if extra_labels == 10:
+                extra_labels = 0
+            print 'Will fill with '+str(extra_labels ) + ' extra labels'
+            
+            for row in range(extra_labels):    
+                row_list.append({'NumberOfBottles':'__','Container':'','ProjectName':project_name,'AnalysisSuite':'','SampleID':'','BottleNumber':'__','Preservative':''})
             
         #print row_list
         
         ## Do the Mail Merge
+        print
         print 'Merging fields'
         document.merge_rows('NumberOfBottles',row_list)
         
         ## Write the file
-        print 'Writing labels'
+        print
+        print 'Writing labels to file'
         document.write(maindir+Coc_Excel_File+'-labels_output.docx')
         
         ## Number of Labels
