@@ -97,7 +97,7 @@ if __name__=='__main__':
             sample_matrix = project_info['Sample Matrix:'].ix[0]
             
             ## Extract Label Data like Sample ID, etc.
-            form = CoC.parse(sheetname=sheet,header=10,index_col=2,parse_cols='A:J',skip_footer=11)
+            form = CoC.parse(sheetname=sheet,header=10,index_col=0,parse_cols='A:J',skip_footer=11)
             ## Drop blank lines from the form
             form = form[notnull(form.index)]
             
@@ -111,8 +111,11 @@ if __name__=='__main__':
             for row in form.iterrows():
                 print row
                 ## Indexed by the "SampleID"
-                sampleID = row[0]
+                sampleID = str(int(row[0]))
                 print sampleID
+                Location = row[1]['Location']
+                sampleID = sampleID + ' ('+Location+')'
+                
                 ## Label data is in the rest of the row
                 info = row[1]
                 try:
