@@ -59,7 +59,8 @@ if __name__=='__main__':
             try:
                 ## On GitHub
                 ## Get template docx file from GitHub and write to folder
-                git_url = "https://raw.githubusercontent.com/CaptainAL/CoC-labels/master/Avery_5523_template.docx" ## URL of template file
+                #git_url = "https://raw.githubusercontent.com/CaptainAL/CoC-labels/master/Avery_5523_template.docx" ## URL of template file
+                git_url = "https://raw.githubusercontent.com/CaptainAL/Labelmaker/Avery%20Label%20Templates/Avery_5523_template_datetime_smallfont.docx"
                 r = get(git_url) ## Access the file at the url
                 f = open(maindir+'default_git_template.docx','wb') ## Open a new file to download data into
                 f.write(r.content) ## Put downloaded data into the file
