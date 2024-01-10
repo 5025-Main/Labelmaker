@@ -10,29 +10,28 @@ if __name__=='__main__':
 
         ## Take a generic Excel File of Chain of Custody (CoC) and generate the appropriate labels
         ## Basic modules
-        import pandas as pd
-        from mailmerge import MailMerge #https://github.com/Bouke/docx-mailmerge
+        from pandas import DataFrame, ExcelFile, notnull, to_datetime
+        from mailmerge import MailMerge
         from requests import get
-        import time
     
         
         
         ###############################################
         ################################## ############
-        print('######################################')
-        print('#### CHAIN OF CUSTODY LABEL-MAKER ####')
-        print('####    written by Alex Messina   ####')
-        print('######################################')
-        print()
-        print('This program will generate labels from a Chain of Custody Form (filled out in the proper Excel template)')
-        print('If you are connected to the internet you can use a label template stored online...')
-        print('...or you can use your own stored locally')
-        print()
-        user_input = input('Type the name of the Excel file, or drag and drop the Chain of Custody here: \n Example: C:/Users/alex.messina/Documents/Executable/CoC MS4 C034.xlsx \n \n' ).replace("\\", "/").strip('"').strip("r'") # uncomment -.strip("r'")- for use in spyder testing
+        print '######################################'
+        print '#### CHAIN OF CUSTODY LABEL-MAKER ####'
+        print '####    written by Alex Messina   ####'
+        print '######################################'
+        print 
+        print 'This program will generate labels from a Chain of Custody Form (filled out in the proper Excel template)'
+        print 'If you are connected to the internet you can use a label template stored online...'
+        print '...or you can use your own stored locally'
         print
-        print('Chain of Custody file selected: ')
-        print(user_input)
-        print()
+        user_input = raw_input('Type the name of the Excel file, or drag and drop the Chain of Custody here: \n Example: C:/Users/alex.messina/Documents/Executable/CoC MS4 C034.xlsx \n \n' ).replace("\\", "/").strip('"').strip("r'") # uncomment -.strip("r'")- for use in spyder testing
+        print
+        print 'Chain of Custody file selected: '
+        print user_input
+        print
         
         ## Set directory where the Chain of Custody is:
         #maindir = "C:/Users/alex.messina/Documents/GitHub/CoC-labels/Executable/"
@@ -40,12 +39,12 @@ if __name__=='__main__':
         ## Input the name of the excel file that is the Chain of Custody form
         Coc_Excel_File = user_input.split("/")[-1]
         file_input = maindir+Coc_Excel_File
-        CoC = pd.ExcelFile(maindir+Coc_Excel_File)
+        CoC = ExcelFile(maindir+Coc_Excel_File)
         
         ## How many extra, blank labels (Project Name only) do you want?
         #extra_labels=4
-        print_extra_labels= str(input('Want to fill your last sheet with extra labels? \n These extras will only have the project name printed \n Y or n? \n \n' ))
-        print ()
+        print_extra_labels= str(raw_input('Want to fill your last sheet with extra labels? \n These extras will only have the project name printed \n Y or n? \n \n' ))
+        print
         
         if print_extra_labels == 'N' or print_extra_labels == 'n' or print_extra_labels == 'No' or print_extra_labels == 'no':
             extra_labels = 0
@@ -55,31 +54,32 @@ if __name__=='__main__':
         
         
         ###### Open template document
-        git_template = str(input('Would you like to use the Default Avery 5523 template from the web (github)? Type Y or n \n'))  
+        git_template = str(raw_input('Would you like to use the Default Avery 5523 template from the web (github)? Type Y or n \n'))  
         if git_template == 'Y' or git_template == 'y':
             try:
                 ## On GitHub
                 ## Get template docx file from GitHub and write to folder
-                git_url = "https://raw.github.com/5025-Main/Labelmaker/7610ab5a9dd00ee1465c491abd785aabc02c62d2/Avery%20Label%20Templates/Avery_5523_template_datetime_bigfont.docx" ## URL of template file
+                #git_url = "https://raw.githubusercontent.com/CaptainAL/CoC-labels/master/Avery_5523_template.docx" ## URL of template file
+                git_url = "https://raw.githubusercontent.com/CaptainAL/Labelmaker/Avery%20Label%20Templates/Avery_5523_template_datetime_smallfont.docx"
                 r = get(git_url) ## Access the file at the url
                 f = open(maindir+'default_git_template.docx','wb') ## Open a new file to download data into
                 f.write(r.content) ## Put downloaded data into the file
                 f.close() ## Close the file
                 label_template_file = maindir+'default_git_template.docx'
             except:
-                print()
-                print("Couldn't get GitHub template. Try another template?")
+                print
+                print "Couldn't get GitHub template. Try another template?"
                 input()
         elif git_template == 'n' or git_template == 'N':
             try:
-                label_template_file = input('Type the name of the Label template file, or drag and drop the Template file here: \n Example: C:/Users/alex.messina/Documents/Executable/avery_5523_template.docx \n \n' ).replace("\\", "/").strip('"').strip("r'") # uncomment -.strip("r'")- for use in spyder testing
+                label_template_file = raw_input('Type the name of the Label template file, or drag and drop the Template file here: \n Example: C:/Users/alex.messina/Documents/Executable/avery_5523_template.docx \n \n' ).replace("\\", "/").strip('"').strip("r'") # uncomment -.strip("r'")- for use in spyder testing
             except:
-                print()
-                print("Couldn't use that template. Try again....")
+                print
+                print "Couldn't use that template. Try again...."
                 input()
         else:
-            print ()
-            print("Didn't get that. Try again...")
+            print 
+            print "Didn't get that. Try again..."
             input()
 
         
@@ -88,25 +88,25 @@ if __name__=='__main__':
     
         
         ## Info for All Chain sheets in workbook (don't iteratively write over!)
-        label_export_sheet = pd.DataFrame(columns=['ProjectName','ProjectNumber','SampleID','Container','Preservative','BottleNumber','NumberOfBottles','AnalysisSuite','SampleType','Matrix','Sample Date','Sample Time'],dtype=object)
+        label_export_sheet = DataFrame(columns=['ProjectName','ProjectNumber','SampleID','Container','Preservative','BottleNumber','NumberOfBottles','AnalysisSuite','SampleType','Matrix','Sample Date','Sample Time'])
         ### Iterate over sheets in workbook (one workbook per project)
-        for sheet in [s for s in CoC.sheet_names if s!= 'ESRI_MAPINFO_SHEET']:
+        for sheet in CoC.sheet_names:
             ## Extract project information and other data
-            project_info = CoC.parse(sheet_name=sheet,header=8,parse_cols='A:F')
+            project_info = CoC.parse(sheetname=sheet,header=8,parse_cols='A:F')
             ## Project Name, Number, Sample Matrix
-            project_name = project_info.loc[0,'Project Name:']
-            project_number = project_info.loc[0,'Project Number:']
-            sample_matrix = project_info.loc[0,'Sample Matrix:']
+            project_name = project_info.ix[0]['Project Name:']
+            project_number = project_info.ix[0]['Project Number:']
+            sample_matrix = project_info.ix[0]['Sample Matrix:']
             
             ## Extract Label Data like Sample ID, etc.
-            form = CoC.parse(sheet_name=sheet,header=10,index_col=0,parse_cols='A:H')#,skip_footer=11)
+            form = CoC.parse(sheetname=sheet,header=10,index_col=0,parse_cols='A:H')#,skip_footer=11)
             ## Drop blank lines from the form
-            form = form.drop(form.loc['Special Instructions/Comments:':].index)
-            form = form[pd.notnull(form.index)]
+            form = form.drop(form.ix['Special Instructions/Comments:':].index)
+            form = form[notnull(form.index)]
             
-            print ()
-            print ()
-            print ('Generating labels for '+sheet+' Chain of Custody for '+project_name)
+            print 
+            print
+            print 'Generating labels for '+sheet+' Chain of Custody for '+project_name
             
             
             ### CREATE LABEL EXPORT
@@ -115,11 +115,11 @@ if __name__=='__main__':
             for row in form.iterrows():
                 ## Indexed by the "SampleID"
                 sampleID = row[0]
-                print(sampleID)
+                print sampleID
                 ## Label data is in the rest of the row
                 info = row[1]
                 if len(info['Analysis']) >= 140:
-                    print(len(info['Analysis']) )
+                    print len(info['Analysis']) 
                     info['Analysis'] = 'See attached'
                 else:
                     pass
@@ -129,8 +129,8 @@ if __name__=='__main__':
                     sample_date = row[1]['Sample Date'].date().strftime('%m/%d/%Y')
                 except:
                     sample_date=''
-                #print('Sample Time '+str(row[1]['Sample Time'])
-                #print('Sample Time '+str(row[1]['Sample Time']).replace('.0','')
+                #print 'Sample Time '+str(row[1]['Sample Time'])
+                #print 'Sample Time '+str(row[1]['Sample Time']).replace('.0','')
                 sample_time = str(row[1]['Sample Time']).replace('.0','')
                 if sample_time == 'nan':
                     sample_time = ''
@@ -141,7 +141,7 @@ if __name__=='__main__':
                 if len(sample_time) == 3:
                     sample_time = '0'+sample_time
                 try:
-                    sample_time = pd.to_datetime(sample_time).strftime('%H:%M')
+                    sample_time = to_datetime(sample_time).strftime('%H:%M')
                 except ValueError:
                     pass
                 ## Determine how many labels are needed, based on how many bottles are needed
@@ -149,19 +149,19 @@ if __name__=='__main__':
                     no_of_bottles = int(info['No. of Bottles'])
                 except:
                     no_of_bottles = 0
-                print("%.0f"%no_of_bottles + ' bottles')
-                print ()
+                print "%.0f"%no_of_bottles + ' bottles'
+                print
                 
                 ## For composite samples, if no. of bottles is blank, print 4 blanks
                 ### BLANK COMPOSITE
                 if 'comp' in info['Sample Type'] or 'Comp' in info['Sample Type'] or 'Composite' in info['Sample Type'] or 'composite' in info['Sample Type']:
                     if no_of_bottles == 0:
-                        print('composite sample, make 4 labels just in case')
+                        print 'composite sample, make 4 labels just in case'
                         no_of_bottles = 4 ## can be set to anything
                         ## Generate required number of labels
                         for bottle_num in range(1,no_of_bottles+1):
                             ## Format the info for each label
-                            new_label_info = pd.DataFrame({'ProjectName':project_name,'ProjectNumber':project_number,'SampleID':sampleID,'Container':info['Container'],'Preservative':info['Pres'],'BottleNumber':'__','NumberOfBottles':'__','AnalysisSuite':info['Analysis'],'SampleType':info['Sample Type'],'Matrix':sample_matrix,'Sample Date':sample_date,'Sample Time':sample_time},index=[sampleID+'_'+str(bottle_num)],dtype=object)
+                            new_label_info = DataFrame({'ProjectName':project_name,'ProjectNumber':project_number,'SampleID':sampleID,'Container':info['Container'],'Preservative':info['Pres'],'BottleNumber':'__','NumberOfBottles':'__','AnalysisSuite':info['Analysis'],'SampleType':info['Sample Type'],'Matrix':sample_matrix,'Sample Date':sample_date,'Sample Time':sample_time},index=[sampleID+'_'+str(bottle_num)])
                             ## Append label info
                             label_export_sheet = label_export_sheet.append(new_label_info)
                 ### NUMBERED COMPOSITE BOTTLES
@@ -169,7 +169,7 @@ if __name__=='__main__':
                         ## Generate required number of labels
                         for bottle_num in range(1,no_of_bottles+1):
                             ## Format the info for each label
-                            new_label_info = pd.DataFrame({'ProjectName':project_name,'ProjectNumber':project_number,'SampleID':sampleID,'Container':info['Container'],'Preservative':info['Pres'],'BottleNumber':str(bottle_num),'NumberOfBottles':str(no_of_bottles),'AnalysisSuite':info['Analysis'],'SampleType':info['Sample Type'],'Matrix':sample_matrix,'Sample Date':sample_date,'Sample Time':sample_time},index=[sampleID+'_'+str(bottle_num)],dtype=object)
+                            new_label_info = DataFrame({'ProjectName':project_name,'ProjectNumber':project_number,'SampleID':sampleID,'Container':info['Container'],'Preservative':info['Pres'],'BottleNumber':str(bottle_num),'NumberOfBottles':str(no_of_bottles),'AnalysisSuite':info['Analysis'],'SampleType':info['Sample Type'],'Matrix':sample_matrix,'Sample Date':sample_date,'Sample Time':sample_time},index=[sampleID+'_'+str(bottle_num)])
                             ## Append label info
                             label_export_sheet = label_export_sheet.append(new_label_info)
                         
@@ -178,7 +178,7 @@ if __name__=='__main__':
                     ## Generate required number of labels
                     for bottle_num in range(1,no_of_bottles+1):
                         ## Format the info for each label
-                        new_label_info = pd.DataFrame({'ProjectName':project_name,'ProjectNumber':project_number,'SampleID':sampleID,'Container':info['Container'],'Preservative':info['Pres'],'BottleNumber':str(bottle_num),'NumberOfBottles':str(no_of_bottles),'AnalysisSuite':info['Analysis'],'SampleType':info['Sample Type'],'Matrix':sample_matrix,'Sample Date':sample_date,'Sample Time':sample_time},index=[sampleID+'_'+str(bottle_num)],dtype=object)
+                        new_label_info = DataFrame({'ProjectName':project_name,'ProjectNumber':project_number,'SampleID':sampleID,'Container':info['Container'],'Preservative':info['Pres'],'BottleNumber':str(bottle_num),'NumberOfBottles':str(no_of_bottles),'AnalysisSuite':info['Analysis'],'SampleType':info['Sample Type'],'Matrix':sample_matrix,'Sample Date':sample_date,'Sample Time':sample_time},index=[sampleID+'_'+str(bottle_num)])
                         ## Append label info
                         label_export_sheet = label_export_sheet.append(new_label_info)
             
@@ -187,12 +187,11 @@ if __name__=='__main__':
         label_export_sheet =label_export_sheet[['ProjectName','ProjectNumber','SampleID','Container','Preservative','BottleNumber','NumberOfBottles','AnalysisSuite','SampleType','Matrix','Sample Date','Sample Time']]
         
         #########################################
-        #### Mail Merge HERE
-                
+        #### Mail Merge HERE            
         document = MailMerge(template_dir+template_file) ## Opens template file downloaded from GitHub above
     
         ## Check which merge fields are present, this is where the label data goes into
-        #print(document.get_merge_fields()
+        #print document.get_merge_fields()
         get_fields = document.get_merge_fields()
     
         ## Fields that are required for the label:
@@ -213,36 +212,36 @@ if __name__=='__main__':
             extra_labels = 10 - numlabels%10
             if extra_labels == 10:
                 extra_labels = 0
-            print('Will fill with '+str(extra_labels ) + ' extra labels')
+            print 'Will fill with '+str(extra_labels ) + ' extra labels'
             
             for row in range(extra_labels):    
                 row_list.append({'NumberOfBottles':'__','Container':'','ProjectName':project_name,'AnalysisSuite':'','SampleID':'','BottleNumber':'__','Preservative':''})
             
-        #print (row_list
+        #print row_list
         
         ## Do the Mail Merge
-        print ()
-        print('Merging fields')
+        print
+        print 'Merging fields'
         document.merge_rows('NumberOfBottles',row_list)
         
         ## Write the file
         print
-        print('Writing labels to file')
+        print 'Writing labels to file'
         document.write(maindir+Coc_Excel_File+'-labels_output.docx')
         
         ## Number of Labels
         number_of_labels = len(merge_fields) + extra_labels
-        print()
-        print()
-        print('Wrote '+str(number_of_labels)+' labels: '+str(len(merge_fields))+' project labels, and '+str(extra_labels)+' extra labels')
-        print()
-        print('Good luck sampling!!')
-        print('press any key to exit....')
-        input()
+        print 
+        print
+        print 'Wrote '+str(number_of_labels)+' labels: '+str(len(merge_fields))+' project labels, and '+str(extra_labels)+' extra labels'
+        print
+        print 'Good luck sampling!!'
+        print 'press any key to exit....'
+        raw_input()
         
         
     except:
         raise
         time.sleep(60)
-        input()
+        raw_input()
     
